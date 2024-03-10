@@ -1,7 +1,9 @@
 from actors import *
+from shared_memory_dict import SharedMemoryDict
 import time
 import threading
 import os
+import keyboard
 
 class Game:
     def __init__(self):
@@ -16,6 +18,11 @@ class Game:
         3 = Results Screen
         """
 
+        # Shared Memory Dictionary Setup
+        self.smd_config = SharedMemoryDict(name='config', size=1024)
+        self.smd_config["x"] = 0
+        self.smd_config["y"] = 0
+
         # Windows
         self.openWindows = []
 
@@ -24,7 +31,7 @@ class Game:
 
 
     def windowThread(self, windowType):
-        os.system('python window.py ' + str(windowType))
+        os.system('python -m window.py ' + str(windowType))
     
     def openNewWindow(self, windowType):
         """
@@ -53,7 +60,20 @@ class Game:
         pass
 
     def inputs(self):
-        pass
+        if keyboard.is_pressed("d"):
+            self.player.x += 5
+        elif keyboard.is_pressed("a"):
+            self.player.x -= 5
+
+        if keyboard.is_pressed("w"):
+            self.player.y -= 5
+        elif keyboard.is_pressed("s"):
+            self.player.y += 5
+
+
+    def dataWrite(self):
+        self.smd_config["x"] = self.player.x
+        self.smd_config["y"] = self.player.y
 
 game = Game()
 game.setup()
@@ -61,6 +81,7 @@ game.setup()
 while game.isRunning:
     game.logic()
     game.inputs()
+    game.dataWrite()
     time.sleep(0.01)
 
 for window in game.openWindows:
